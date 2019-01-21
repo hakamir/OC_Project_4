@@ -1,4 +1,9 @@
-from PyQt5 import QtWidgets, QtCore 
+from PyQt5 import QtWidgets, QtCore, QtWebEngineWidgets 
+
+from gmplot import gmplot
+
+import os
+
 
 class MainWindow(QtWidgets.QMainWindow): 
     def __init__(self, parent = None): 
@@ -37,18 +42,40 @@ class TabWidget(QtWidgets.QWidget):
     def __init__(self, parent): 
      super(TabWidget, self).__init__(parent) 
      self.__setup__() 
+     map = Map()
+     #map.__setup__()
+     
     def __setup__(self): 
-     self.tabWidget = QtWidgets.QTabWidget() 
-     for i in range(4): 
-      widget = QtWidgets.QTableWidget() 
-      """widget.setColumnCount(1) 
-      widget.setRowCount(i+1) """
-      
-      self.tabWidget.addTab(widget, "Système " + str(i+1)) 
+        self.tabWidget = QtWidgets.QTabWidget() 
+        
+        self.view = QtWebEngineWidgets.QWebEngineView()
+        self.tabWidget.addTab(self.view, "Map") 
 
-     layout = QtWidgets.QVBoxLayout() 
-     layout.addWidget(self.tabWidget) 
-     self.setLayout(layout) 
+        widget_2 = QtWidgets.QTableWidget() 
+        self.tabWidget.addTab(widget_2, "Sys2") 
+        
+        widget_3 = QtWidgets.QTableWidget() 
+        self.tabWidget.addTab(widget_3, "Sys3") 
+        
+        layout = QtWidgets.QVBoxLayout() 
+        layout.addWidget(self.tabWidget) 
+        self.setLayout(layout) 
+        fichierweb = "file:///" + os.path.abspath("my_map.html").replace("\\", "/") + "#partiecommune"
+        self.page = QtWebEngineWidgets.QWebEnginePage()
+        self.page.setUrl(QtCore.QUrl(fichierweb))
+        self.view.setPage(self.page)
+        self.view.show()
+     
+class Map(QtWidgets.QWidget):
+
+    def __init__(self):
+        super().__init__()
+        self.__setup__(49.373659, 1.0752621, 16)
+        
+    def __setup__(self, x, y, z):
+        gmap = gmplot.GoogleMapPlotter(x, y, z)
+        gmap.draw("my_map.html")
+        print("done")
 
 def main(): 
     import sys 
