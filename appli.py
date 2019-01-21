@@ -1,7 +1,7 @@
 import sys
 from itertools import product
 from PyQt5.QtWidgets import QMainWindow, QApplication,QHBoxLayout, QFrame,QPushButton,QTableWidgetItem, QWidget, QAction, QTabWidget,QVBoxLayout,QLabel,QTableWidget
-from PyQt5.QtGui import *
+from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import *
 from PyQt5.QtWebEngineWidgets import *
 from pylab import *
@@ -77,6 +77,28 @@ class TabWidget(QWidget):
         self.tab2.verticalLayoutR.addWidget(self.canvas)
 
         self.tab2.principalLayout.addLayout(self.tab2.verticalLayoutR)
+
+        # Create third tab
+        self.tab3.principalLayout = QHBoxLayout(self.tab3)
+        self.tab3.rightFrame = QFrame(self.tab3)
+        self.tab3.verticalLayout = QVBoxLayout(self.tab3.rightFrame)
+        self.label1 = QLabel(self)
+        self.label1.setText("Nombre de personnes autorisées à entrer : ")
+        self.label2 = QLabel(self)
+        self.label2.setText("Nombre de personnes qui entrent : ")
+        self.tab3.verticalLayout.addWidget(self.label1)
+        self.tab3.verticalLayout.addWidget(self.label2)
+        self.tab3.principalLayout.addWidget(self.tab3.rightFrame)
+
+        self.tab3.verticalLayoutR = QVBoxLayout()
+        self.tab3.verticalLayoutR.setSpacing(0)
+        self.tab3.exitFrame = QFrame(self.tab3)
+        self.label3 = QLabel(self)
+        pixmap = QPixmap("logo.png")
+        self.resize(1000, 600)
+        self.label3.setPixmap(pixmap)
+        self.tab3.verticalLayoutR.addWidget(self.label3)
+        self.tab3.principalLayout.addLayout(self.tab3.verticalLayoutR)
      
 class Map(QWidget):
 
