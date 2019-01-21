@@ -37,7 +37,6 @@ class TabWidget(QtWidgets.QWidget):
     def __init__(self, parent): 
      super(TabWidget, self).__init__(parent) 
      self.__setup__() 
-
     def __setup__(self): 
      self.tabWidget = QtWidgets.QTabWidget() 
      for i in range(4): 
@@ -45,7 +44,6 @@ class TabWidget(QtWidgets.QWidget):
       """widget.setColumnCount(1) 
       widget.setRowCount(i+1) """
       
-      label.setText("Coucou" + str(i+1))
       self.tabWidget.addTab(widget, "Système " + str(i+1)) 
 
      layout = QtWidgets.QVBoxLayout() 
