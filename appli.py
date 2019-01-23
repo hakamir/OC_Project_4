@@ -1,7 +1,7 @@
 import sys, os
 from itertools import product
 
-import xbee
+#import xbee
 
 from PyQt5.QtWidgets import QMainWindow, QApplication,QHBoxLayout, QFrame,QPushButton,QTableWidgetItem, QWidget, QAction, QTabWidget,QVBoxLayout,QLabel,QTableWidget, QMessageBox
 from PyQt5.QtGui import QIcon, QPixmap, QFont, QImage
@@ -220,7 +220,7 @@ class Thread(QThread):
     changePixmap = pyqtSignal(QImage)
 
     def run(self):
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture("http://192.168.43.84:8080/?action=stream")
         while True:
             ret, frame = cap.read()
             if ret:
