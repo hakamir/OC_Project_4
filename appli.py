@@ -1,6 +1,6 @@
 import sys, os
 from itertools import product
-from PyQt5.QtWidgets import QMainWindow, QApplication,QHBoxLayout, QFrame,QPushButton,QTableWidgetItem, QWidget, QAction, QTabWidget,QVBoxLayout,QLabel,QTableWidget
+from PyQt5.QtWidgets import QMainWindow, QApplication,QHBoxLayout, QFrame,QPushButton,QTableWidgetItem, QWidget, QAction, QTabWidget,QVBoxLayout,QLabel,QTableWidget, QMessageBox
 from PyQt5.QtGui import QIcon, QPixmap, QFont
 from PyQt5.QtCore import *
 from PyQt5.QtWebEngineWidgets import *
@@ -138,8 +138,19 @@ class TabWidget(QWidget):
         self.catchNbPerson()
         self.nbPerson = self.catchNbPerson()
         self.labelNbPerson.setText(self.nbPerson)
+        self.alarm()
         
         QApplication.processEvents()
+        
+    def alarm(self):
+    
+        if self.nbPersonRFID != self.nbPerson:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setText("Number of persons doesn't tie on!")
+            msg.setWindowTitle("Alarm")
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec_()
 
     
 class Map(QWidget):
