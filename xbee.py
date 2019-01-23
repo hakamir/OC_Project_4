@@ -1,13 +1,14 @@
 import serial
 import check_authorisation as check
 
-port = serial.Serial('/dev/tty.usbserial-A506QTYE', 9600)
+def nbPers():
 
-print("Port {} ouvert".format(port.name))
-print("*****************************")
+    port = serial.Serial('/dev/tty.usbserial-A506QTYE', 9600)
 
-#def nbPers()
-while True:
+    print("Port {} ouvert".format(port.name))
+    print("*****************************")
+
+    while True:
         line = port.readline()
         if not line:
             continue
@@ -40,8 +41,9 @@ while True:
                 splitLine = line.decode().split(' ')
             except UnicodeDecodeError:
                 continue
-        
 
-port.close()
-print("*****************************")
-print("Port fermé")
+    return nb_personnes   
+
+    port.close()
+    print("*****************************")
+    print("Port fermé")
