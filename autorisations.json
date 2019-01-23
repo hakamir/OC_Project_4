@@ -1,0 +1,22 @@
+{
+	"Personnes" : [
+		{
+			"ID" 			: "30313233343536373839",
+			"prenom" 		: "prenom1",
+			"nom"			: "nom1",
+			"nb_personnes"	: "1"
+		},
+		{
+			"ID" 			: "0000000000",
+			"prenom" 		: "prenom2",
+			"nom"			: "nom2",
+			"nb_personnes"	: "2"
+		},
+		{
+			"ID" 			: "0000000000",
+			"prenom" 		: "prenom3",
+			"nom"			: "nom3",
+			"nb_personnes"	: "3"
+		}
+	]
+}
