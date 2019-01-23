@@ -14,6 +14,15 @@
 		};
 		var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 
+		var latlng = new google.maps.LatLng(49.373659, 1.075262);
+		var img = new google.maps.MarkerImage('C:\ProgramData\Anaconda3\lib\site-packages\gmplot\markers/FF0000.png');
+		var marker = new google.maps.Marker({
+		title: "no implementation",
+		icon: img,
+		position: latlng
+		});
+		marker.setMap(map);
+
 	}
 </script>
 </head>
