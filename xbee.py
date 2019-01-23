@@ -1,8 +1,11 @@
 import serial
 import check_authorisation as check
+import threading
+import time
+
 
 def nbPers():
-
+    flag = True
     port = serial.Serial('/dev/tty.usbserial-A506QTYE', 9600)
 
     print("Port {} ouvert".format(port.name))
@@ -17,7 +20,7 @@ def nbPers():
             splitLine = line.decode().split(' ')
         except UnicodeDecodeError:
             continue
-        
+
         #print(splitLine)
 
         while splitLine[0] == "ISO15693":
@@ -33,7 +36,7 @@ def nbPers():
 
             nb_personnes = check.nbPersonnes(tmp)
             print('Nombres de personnes autorisees : ' + str(nb_personnes))
-        
+
             line = port.readline()
             if not line:
                 break
@@ -41,9 +44,13 @@ def nbPers():
                 splitLine = line.decode().split(' ')
             except UnicodeDecodeError:
                 continue
+            #time.sleep(5)
 
-    return nb_personnes   
+    return nb_personnes
 
     port.close()
     print("*****************************")
     print("Port fermé")
+
+
+tamp = nbPers()

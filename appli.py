@@ -1,7 +1,7 @@
 import sys, os
 from itertools import product
 
-#import xbee
+import xbee
 
 from PyQt5.QtWidgets import QMainWindow, QApplication,QHBoxLayout, QFrame,QPushButton,QTableWidgetItem, QWidget, QAction, QTabWidget,QVBoxLayout,QLabel,QTableWidget, QMessageBox
 from PyQt5.QtGui import QIcon, QPixmap, QFont, QImage
@@ -115,9 +115,13 @@ class TabWidget(QWidget):
         font = QFont("Times", 20, QFont.Bold)
         self.labelNbPerson.setFont(font)
         
+        # Define serial port
+        th2 = Thread2(self)
+        th2.start()
+
         # Define label showing the number of person get from the RFID receptor
         self.labelNbPersonRFID = QLabel(self)
-        self.nbPersonRFID = "2" # Prendra la donnée transmise depuis le récepteur RFID
+        self.nbPersonRFID = "2"#Thread2.run(self) # Prendra la donnée transmise depuis le récepteur RFID
         self.labelNbPersonRFID.setText(self.nbPersonRFID)
         self.labelNbPersonRFID.setFont(font)
         
@@ -228,7 +232,12 @@ class Thread(QThread):
                 convertToQtFormat = QImage(rgbImage.data, rgbImage.shape[1], rgbImage.shape[0], QImage.Format_RGB888)
                 p = convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
                 self.changePixmap.emit(p)
-        
+
+class Thread2(QThread):
+    def run(self):
+        self.nb = xbee.nbPers()
+        print(self.nb)
+        return self.nb
         
 
 
