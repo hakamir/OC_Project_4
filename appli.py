@@ -1,13 +1,12 @@
-import sys
+import sys, os
 from itertools import product
 from PyQt5.QtWidgets import QMainWindow, QApplication,QHBoxLayout, QFrame,QPushButton,QTableWidgetItem, QWidget, QAction, QTabWidget,QVBoxLayout,QLabel,QTableWidget
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtGui import QIcon, QPixmap, QFont
 from PyQt5.QtCore import *
 from PyQt5.QtWebEngineWidgets import *
 from pylab import *
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from gmplot import gmplot
-import os
 
 
 class MainWindow(QMainWindow): 
@@ -86,8 +85,26 @@ class TabWidget(QWidget):
         self.label1.setText("Nombre de personnes autorisées à entrer : ")
         self.label2 = QLabel(self)
         self.label2.setText("Nombre de personnes qui entrent : ")
+
+        self.labelNbPerson = QLabel(self)
+        self.nbPerson = self.catchNbPerson()
+        self.labelNbPerson.setText(self.nbPerson)
+        font = QFont("Times", 20, QFont.Bold)
+        self.labelNbPerson.setFont(font)
+        
+        self.labelNbPersonRFID = QLabel(self)
+        self.nbPersonRFID = "2" # Prendra la donnée transmise depuis le récepteur RFID
+        self.labelNbPersonRFID.setText(self.nbPersonRFID)
+        self.labelNbPersonRFID.setFont(font)
+        
+        self.refreshButton = QPushButton("Refresh",self)
+        self.refreshButton.clicked.connect(self.refresh)
+		
         self.tab3.verticalLayout.addWidget(self.label1)
+        self.tab3.verticalLayout.addWidget(self.labelNbPersonRFID)
         self.tab3.verticalLayout.addWidget(self.label2)
+        self.tab3.verticalLayout.addWidget(self.labelNbPerson)
+        self.tab3.verticalLayout.addWidget(self.refreshButton)
         self.tab3.principalLayout.addWidget(self.tab3.rightFrame)
 
         self.tab3.verticalLayoutR = QVBoxLayout()
@@ -99,12 +116,37 @@ class TabWidget(QWidget):
         self.label3.setPixmap(pixmap)
         self.tab3.verticalLayoutR.addWidget(self.label3)
         self.tab3.principalLayout.addLayout(self.tab3.verticalLayoutR)
-     
+		
+    def catchNbPerson(self):
+	
+        script_dir = os.path.dirname(__file__) #<-- absolute dir the script is in
+        rel_path = "dl/persons.txt"
+        abs_file_path = os.path.join(script_dir, rel_path)
+
+        try:
+            fd = open(abs_file_path, mode='r')
+        except FileNotFoundError:
+            print("ERROR Cannot find file named: %s"%abs_file_path)
+            sys.exit()
+
+        content = fd.read()
+        fd.close()
+        return content
+        
+    def refresh(self):
+    
+        self.catchNbPerson()
+        self.nbPerson = self.catchNbPerson()
+        self.labelNbPerson.setText(self.nbPerson)
+        
+        QApplication.processEvents()
+
+    
 class Map(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.__setup__(49.373659, 1.0752621, 16)
+        self.__setup__(49.373659, 1.0752621, 12)
         
     def __setup__(self, x, y, z):
         gmap = gmplot.GoogleMapPlotter(x, y, z)
