@@ -40,6 +40,9 @@ class TabWidget(QWidget):
     
         self.x = "0.0"
         self.y = "0.0"
+        self.bufferX = []
+        self.bufferY = []
+        
         # Initialize tab screen
         self.tabs = QTabWidget() 
         self.tab1 = QTableWidget()
@@ -226,7 +229,10 @@ class TabWidget(QWidget):
         self.map.__setup__(float(self.x), float(self.y), 12)
         
         self.table_constructor(int(self.time),int(self.bpm))
-        #self.view.plot(???, name='Rythme Cardiaque', pen='r', symbol='o')
+        self.bufferX.append(int(self.time))
+        self.bufferY.append(int(self.bpm))
+        self.view.clear()
+        self.view.plot(x = self.bufferX, y = self.bufferY, name='Rythme Cardiaque', pen='r', symbol='o')
         
         QApplication.processEvents()
 
