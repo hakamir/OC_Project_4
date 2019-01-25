@@ -5,8 +5,9 @@ import time
 
 
 def nbPers():
-    flag = True
     port = serial.Serial('/dev/tty.usbserial-A506QTYE', 9600)
+
+    #port.open()
 
     print("Port {} ouvert".format(port.name))
     print("*****************************")
@@ -32,10 +33,10 @@ def nbPers():
             tmp = tmp.replace(']', '')
             tmp = tmp.replace('\n', '')
             tmp = tmp.replace('\r', '')
-            print(tmp)  
+            #print(tmp)  
 
             nb_personnes = check.nbPersonnes(tmp)
-            print('Nombres de personnes autorisees : ' + str(nb_personnes))
+            #print('Nombres de personnes autorisees : ' + str(nb_personnes))
 
             line = port.readline()
             if not line:
@@ -46,11 +47,21 @@ def nbPers():
                 continue
             #time.sleep(5)
 
-    return nb_personnes
+            port.close()
+            print("*****************************")
+            print("Port fermé")
+            port.open()
+            print("Port {} ouvert".format(port.name))
+            print("*****************************")
+
+            return nb_personnes
+
+    #return nb_personnes
 
     port.close()
     print("*****************************")
     print("Port fermé")
 
-
-tamp = nbPers()
+#while(True):
+#var = nbPers()
+#print("fonction : " + str(var))
