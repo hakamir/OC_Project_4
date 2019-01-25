@@ -6,8 +6,17 @@ import time
 
 def nbPers():
     flag = True
-    port = serial.Serial('/dev/tty.usbserial-A506QTYE', 9600)
-
+    try:
+        port = serial.Serial('/dev/tty.usbserial-A506QTYE', 9600)
+    except:
+        try: 
+            port = serial.Serial()
+            port.baudrate = 9600
+            port.port = 'COM29'
+            port.open()
+        except:
+            print("ERROR Cannot open serial port.")
+    
     print("Port {} ouvert".format(port.name))
     print("*****************************")
 
