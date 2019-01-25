@@ -38,8 +38,8 @@ class TabWidget(QWidget):
         
     def __setup__(self): 
     
-        self.x = "0"
-        self.y = "0"
+        self.x = "0.0"
+        self.y = "0.0"
         # Initialize tab screen
         self.tabs = QTabWidget() 
         self.tab1 = QTableWidget()
@@ -92,7 +92,6 @@ class TabWidget(QWidget):
         """
         # Define table
         """
-        self.cardio = 0
         self.tableLabel = QLabel(self.tab2)
         self.tableLabel.setText("Data: ")
         self.tableLabel.move(20,0)
@@ -112,7 +111,7 @@ class TabWidget(QWidget):
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         """
-        # Define temperature graph
+        # Define graph
         """
         self.tempLabel = QLabel(self.tab2)
         self.tempLabel.setText("Rythme cardiaque: ")
@@ -226,6 +225,9 @@ class TabWidget(QWidget):
         self.lonValue.setText(self.y)
         self.map.__setup__(float(self.x), float(self.y), 12)
         
+        self.table_constructor(int(self.time),int(self.bpm))
+        #self.view.plot(???, name='Rythme Cardiaque', pen='r', symbol='o')
+        
         QApplication.processEvents()
 
     def alarm(self):
@@ -244,7 +246,7 @@ class TabWidget(QWidget):
         self.video.setPixmap(QPixmap.fromImage(image))
         
     def extractToJson(self):
-        dicOut = {"latitude":self.x,"longitude":self.y,"nbPerson":self.nbPersonRFID,"nbPersonCam":self.nbPerson,"cardiaque":self.cardio}
+        dicOut = {"latitude":self.x,"longitude":self.y,"nbPerson":self.nbPersonRFID,"nbPersonCam":self.nbPerson,"cardiaque":self.bpm}
 
         filename = "data.json" 
         try: 
@@ -253,6 +255,34 @@ class TabWidget(QWidget):
         except IOError:
             print("Problems opening file "+filename)
 
+    def table_constructor(self, time, data):
+        """
+        # Construct info in the table
+        """
+        for row in range(self.table.rowCount()):
+            # Check for a free row
+            if self.table.cellWidget(row,0) is None:
+                HBox1 = QHBoxLayout()
+                HBox2 = QHBoxLayout()
+                
+                heure = datetime.datetime.fromtimestamp(time)
+                # Will take the value of time and beat per minute into the table
+                HBox1.addWidget(QLabel(str(heure)))
+                HBox2.addWidget(QLabel(str(data)))
+                w1 = QWidget()
+                w2 = QWidget()
+                w1.setLayout(HBox1)
+                w2.setLayout(HBox2)
+                self.table.setCellWidget(row, 0, w1)
+                self.table.setCellWidget(row, 1, w2)
+                break
+
+            elif row==149:
+                popUp = QMessageBox()
+                popUp.setText("The list is full. Reset it to show new values.")
+                popUp.exec()
+                break
+            
 class Thread(QThread):
     changePixmap = pyqtSignal(QImage)
 
@@ -358,7 +388,7 @@ class Thread3(QThread):
                         self.lng = vi
         self.dic = {'data' : self.data, 'time_s' : self.time_s, 'lat' : self.lat, 'lng' : self.lng}
         return self.dic
-        
+         
 class Map(QWidget):
 
     def __init__(self):
