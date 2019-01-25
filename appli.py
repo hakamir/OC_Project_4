@@ -188,14 +188,16 @@ class TabWidget(QWidget):
         QApplication.processEvents()
 
     def alarm(self):
-    
-        if self.nbPersonRFID != self.nbPerson:
+        if int(self.nbPersonRFID) != int(self.nbPerson):
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Warning)
             msg.setText("Number of persons doesn't tie on!")
             msg.setWindowTitle("Alarm")
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec_()
+            return True
+        else:
+            return False
             
     def setImage(self, image):
         self.video.setPixmap(QPixmap.fromImage(image))
@@ -241,8 +243,16 @@ class Thread(QThread):
 
 class Thread2(QThread):
     def nbPers(self):
-        port = serial.Serial('/dev/tty.usbserial-A506QTYE', 9600)
-
+        try:
+            port = serial.Serial('/dev/tty.usbserial-A506QTYE', 9600)
+        except:
+            try:
+                port = serial.Serial()
+                port.bitrate=9600
+                port.port='COM29'
+                port.open()
+            except:
+                print("ERROR Cannot open serial port.")
         #port.open()
 
         print("Port {} ouvert".format(port.name))
