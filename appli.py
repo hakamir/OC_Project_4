@@ -1,7 +1,8 @@
 import sys, os
 from itertools import product
 
-import xbee
+import serial
+import check_authorisation as check
 
 from PyQt5.QtWidgets import QMainWindow, QApplication,QHBoxLayout, QFrame,QPushButton,QTableWidgetItem, QWidget, QAction, QTabWidget,QVBoxLayout,QLabel,QTableWidget, QMessageBox
 from PyQt5.QtGui import QIcon, QPixmap, QFont, QImage
@@ -24,6 +25,7 @@ class MainWindow(QMainWindow):
      self.resize(1000, 600) 
      tabs = TabWidget(self) 
      self.setCentralWidget(tabs) 
+
 
 class TabWidget(QWidget): 
     def __init__(self, parent): 
@@ -116,12 +118,12 @@ class TabWidget(QWidget):
         self.labelNbPerson.setFont(font)
         
         # Define serial port
-        th2 = Thread2(self)
-        th2.start()
+        self.th2 = Thread2(self)
+        self.th2.start()
 
         # Define label showing the number of person get from the RFID receptor
         self.labelNbPersonRFID = QLabel(self)
-        self.nbPersonRFID = "2"#Thread2.run(self) # Prendra la donnée transmise depuis le récepteur RFID
+        self.nbPersonRFID = "0"#Thread2.run(self) # Prendra la donnée transmise depuis le récepteur RFID
         self.labelNbPersonRFID.setText(self.nbPersonRFID)
         self.labelNbPersonRFID.setFont(font)
         
@@ -174,7 +176,9 @@ class TabWidget(QWidget):
         return content
         
     def refresh(self):
-    
+        
+        self.nbPersonRFID = self.th2.nbPers() # Prendra la donnée transmise depuis le récepteur RFID
+        self.labelNbPersonRFID.setText(str(self.nbPersonRFID))
         self.catchNbPerson()
         self.nbPerson = self.catchNbPerson()
         self.labelNbPerson.setText(self.nbPerson)
@@ -220,6 +224,7 @@ class Map(QWidget):
         gmap.draw("my_map.html")
         print("done")
 
+
 class Thread(QThread):
     changePixmap = pyqtSignal(QImage)
 
@@ -233,14 +238,66 @@ class Thread(QThread):
                 p = convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
                 self.changePixmap.emit(p)
 
+
 class Thread2(QThread):
-    def run(self):
-        self.nb = xbee.nbPers()
-        print(self.nb)
-        return self.nb
+    def nbPers(self):
+        port = serial.Serial('/dev/tty.usbserial-A506QTYE', 9600)
+
+        #port.open()
+
+        print("Port {} ouvert".format(port.name))
+        print("*****************************")
+
+        while True:
+            line = port.readline()
+            if not line:
+                continue
+
+            try:
+                splitLine = line.decode().split(' ')
+            except UnicodeDecodeError:
+                continue
+
+            #print(splitLine)
+
+            while splitLine[0] == "ISO15693":
+                try:
+                    tmp = splitLine[2]
+                except IndexError:
+                    continue
+                tmp = tmp.replace('[', '')
+                tmp = tmp.replace(']', '')
+                tmp = tmp.replace('\n', '')
+                tmp = tmp.replace('\r', '')
+                #print(tmp)  
+
+                nb_personnes = check.nbPersonnes(tmp)
+                #print('Nombres de personnes autorisees : ' + str(nb_personnes))
+
+                line = port.readline()
+                if not line:
+                    break
+                try:
+                    splitLine = line.decode().split(' ')
+                except UnicodeDecodeError:
+                    continue
+                #time.sleep(5)
+
+                port.close()
+                print("*****************************")
+                print("Port fermé")
+                port.open()
+                print("Port {} ouvert".format(port.name))
+                print("*****************************")
+
+                return nb_personnes
+
+        #return nb_personnes
+
+        port.close()
+        print("*****************************")
+        print("Port fermé")
         
-
-
 
 def main(): 
     import sys 
@@ -249,6 +306,6 @@ def main():
     window.show() 
     app.exec_()
 
-if __name__ == "__main__": 
-    main() 
 
+if __name__ == "__main__": 
+    main()
