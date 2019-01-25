@@ -4,7 +4,7 @@ from itertools import product
 import serial
 import check_authorisation as check
 
-from PyQt5.QtWidgets import QMainWindow, QApplication,QHBoxLayout, QFrame,QPushButton,QTableWidgetItem, QWidget, QAction, QTabWidget,QVBoxLayout,QLabel,QTableWidget, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QApplication,QHBoxLayout, QFrame,QPushButton,QTableWidgetItem, QWidget, QAction, QTabWidget,QVBoxLayout,QLabel,QTableWidget, QMessageBox, QAbstractItemView
 from PyQt5.QtGui import QIcon, QPixmap, QFont, QImage
 from PyQt5.QtCore import *
 from PyQt5.QtWebEngineWidgets import *
@@ -15,6 +15,8 @@ import json
 from gmplot import gmplot
 import cv2
 
+import pyqtgraph as pg
+
 
 class MainWindow(QMainWindow): 
     def __init__(self, parent = None): 
@@ -23,6 +25,7 @@ class MainWindow(QMainWindow):
 
     def __setup__(self): 
      self.resize(1000, 600) 
+     self.setFixedSize(1000,600)
      tabs = TabWidget(self) 
      self.setCentralWidget(tabs) 
 
@@ -32,14 +35,16 @@ class TabWidget(QWidget):
         super(TabWidget, self).__init__(parent) 
         self.__setup__() 
         map = Map()
-        self.x = 0
-        self.y = 0
+        
         
     
     def __setup__(self): 
+    
+        self.x = "0"
+        self.y = "0"
         # Initialize tab screen
         self.tabs = QTabWidget() 
-        self.tab1 = QWebEngineView()
+        self.tab1 = QTableWidget()
         self.tab2 = QTableWidget() 
         self.tab3 = QTableWidget()
 
@@ -48,54 +53,80 @@ class TabWidget(QWidget):
         self.tabs.addTab(self.tab2, "Cardio")
         self.tabs.addTab(self.tab3, "Domotique") 
         
+        layout = QVBoxLayout() 
+        layout.addWidget(self.tabs) 
+        self.setLayout(layout) 
+        
         ###################################################################
         # TAB 1                                                           #
         ###################################################################
         
         # Create first tab Map
-        layout = QVBoxLayout() 
-        layout.addWidget(self.tabs) 
-        self.setLayout(layout) 
+        self.latLab=QLabel(self.tab1)
+        self.lonLab=QLabel(self.tab1)
+        self.latValue=QLabel(self.tab1)
+        self.lonValue=QLabel(self.tab1)
+        
+        self.latLab.setText("Latitude : ")
+        self.lonLab.setText("Longitude :")
+        self.latLab.move(5,0)
+        self.lonLab.move(205,0)
+        
+        self.latValue.setText(self.x)
+        self.lonValue.setText(self.y)
+        self.latValue.move(85,0)
+        self.lonValue.move(285,0)
+        
+        self.webWidget = QWebEngineView(self.tab1)
+        self.webWidget.move(0,20)
+        self.webWidget.resize(1000,580)
         fichierweb = "file:///" + os.path.abspath("my_map.html").replace("\\", "/")
         self.page = QWebEnginePage()
         self.page.setUrl(QUrl(fichierweb))
-        self.tab1.setPage(self.page)
-        self.tab1.show()
+        self.webWidget.setPage(self.page)
+        self.webWidget.show()
 
         ###################################################################
         # TAB 2                                                           #
         ###################################################################
         
         # Create second tab Cardio
-        self.cardio = 64
+        """
+        # Define table
+        """
+        self.cardio = 0
+        self.tableLabel = QLabel(self.tab2)
+        self.tableLabel.setText("Data: ")
+        self.tableLabel.move(20,0)
         
-        self.tab2.principalLayout = QHBoxLayout(self.tab2)
+        self.table = QTableWidget(self.tab2)
+        self.table.setMinimumWidth(304)
+        self.table.setMinimumHeight(475)
+        self.table.move(20,20)
+        self.table.setRowCount(150)
+        self.table.setColumnCount(2)
+        self.table.setHorizontalHeaderItem(0, QTableWidgetItem("Heure"))
+        self.table.setColumnWidth(0,150)
+        self.table.setHorizontalHeaderItem(1, QTableWidgetItem("Rythme cardiaque"))
+        self.table.setColumnWidth(1,150)
+        self.table.verticalHeader().setVisible(False)
+        # Unset the possibility to edit cells
+        self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
-        self.tab2.rightFrame = QFrame(self.tab2)
-        self.tab2.verticalLayout = QVBoxLayout(self.tab2.rightFrame)
-        self.table1 = QTableWidget()
-        self.table1.setRowCount(150)
-        self.table1.setColumnCount(2)
-        self.table1.setHorizontalHeaderLabels(["Heure","Rythme Cardiaque"])
-        self.tab2.verticalLayout.addWidget(self.table1)
-        self.tab2.principalLayout.addWidget(self.tab2.rightFrame)
+        """
+        # Define temperature graph
+        """
+        self.tempLabel = QLabel(self.tab2)
+        self.tempLabel.setText("Rythme cardiaque: ")
+        self.tempLabel.move(380,0)
+        pg.setConfigOption('background', (240,240, 240))
+        pg.setConfigOption('foreground', 'k')
+        self.view = pg.PlotWidget(self.tab2)
+        self.view.resize(550,475)
+        self.view.move(380,20)
+        self.view.setYRange(0, 30)
 
-
-        self.tab2.verticalLayoutR = QVBoxLayout()
-        self.tab2.verticalLayoutR.setSpacing(0)
-        self.tab2.exitFrame = QFrame(self.tab2)
-
-        self.fig = Figure()
-        self.axes = self.fig.add_subplot(111)
- 
-        self.x = linspace(-pi, pi, 30)
-        self.y = cos(self.x)
-        self.line, = self.axes.plot(self.x, self.y)
-
-        self.canvas = FigureCanvas(self.fig)
-        self.tab2.verticalLayoutR.addWidget(self.canvas)
-
-        self.tab2.principalLayout.addLayout(self.tab2.verticalLayoutR)
+        self.view.showGrid(x=True,y=True)
 
         ###################################################################
         # TAB 3                                                           #
