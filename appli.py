@@ -3,6 +3,8 @@ from itertools import product
 
 import serial
 import check_authorisation as check
+from sigfoxapi import Sigfox
+import datetime
 
 from PyQt5.QtWidgets import QMainWindow, QApplication,QHBoxLayout, QFrame,QPushButton,QTableWidgetItem, QWidget, QAction, QTabWidget,QVBoxLayout,QLabel,QTableWidget, QMessageBox, QAbstractItemView
 from PyQt5.QtGui import QIcon, QPixmap, QFont, QImage
@@ -14,7 +16,6 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 import json
 from gmplot import gmplot
 import cv2
-
 import pyqtgraph as pg
 
 
@@ -29,15 +30,12 @@ class MainWindow(QMainWindow):
      tabs = TabWidget(self) 
      self.setCentralWidget(tabs) 
 
-
 class TabWidget(QWidget): 
     def __init__(self, parent): 
         super(TabWidget, self).__init__(parent) 
         self.__setup__() 
-        map = Map()
+        self.map = Map()
         
-        
-    
     def __setup__(self): 
     
         self.x = "0"
@@ -85,7 +83,7 @@ class TabWidget(QWidget):
         self.page.setUrl(QUrl(fichierweb))
         self.webWidget.setPage(self.page)
         self.webWidget.show()
-
+        
         ###################################################################
         # TAB 2                                                           #
         ###################################################################
@@ -127,6 +125,14 @@ class TabWidget(QWidget):
         self.view.setYRange(0, 30)
 
         self.view.showGrid(x=True,y=True)
+        
+        self.th3 = Thread3(self)
+        self.th3.start()
+        dic = self.th3.sigfox()
+        self.x = dic['lat']
+        self.y = dic['lng']
+        self.time = dic['time_s']
+        self.bpm = dic['data']
 
         ###################################################################
         # TAB 3                                                           #
@@ -216,6 +222,10 @@ class TabWidget(QWidget):
         self.alarm()
         self.extractToJson()
         
+        self.latValue.setText(self.x)
+        self.lonValue.setText(self.y)
+        self.map.__setup__(float(self.x), float(self.y), 12)
+        
         QApplication.processEvents()
 
     def alarm(self):
@@ -234,29 +244,14 @@ class TabWidget(QWidget):
         self.video.setPixmap(QPixmap.fromImage(image))
         
     def extractToJson(self):
-        dic = {"latitude":self.x,"longitude":self.y,"nbPerson":self.nbPersonRFID,"nbPersonCam":self.nbPerson,"cardiaque":self.cardio}
+        dicOut = {"latitude":self.x,"longitude":self.y,"nbPerson":self.nbPersonRFID,"nbPersonCam":self.nbPerson,"cardiaque":self.cardio}
 
         filename = "data.json" 
         try: 
             with open(filename, "w") as fd: 
-                json.dump(dic, fd) 
+                json.dump(dicOut, fd) 
         except IOError:
             print("Problems opening file "+filename)
-
-            
-            
-class Map(QWidget):
-
-    def __init__(self):
-        super().__init__()
-        self.__setup__(49.373659, 1.0752621, 12)
-        
-    def __setup__(self, x, y, z):
-        gmap = gmplot.GoogleMapPlotter(x, y, z)
-        gmap.marker(x, y, 'red')
-        gmap.draw("my_map.html")
-        print("done")
-
 
 class Thread(QThread):
     changePixmap = pyqtSignal(QImage)
@@ -271,7 +266,6 @@ class Thread(QThread):
                 p = convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
                 self.changePixmap.emit(p)
 
-
 class Thread2(QThread):
     def nbPers(self):
         try:
@@ -280,10 +274,11 @@ class Thread2(QThread):
             try:
                 port = serial.Serial()
                 port.bitrate=9600
-                port.port='COM29'
+                port.port='COM32'
                 port.open()
             except:
                 print("ERROR Cannot open serial port.")
+                return 0
         #port.open()
 
         print("Port {} ouvert".format(port.name))
@@ -338,7 +333,43 @@ class Thread2(QThread):
         port.close()
         print("*****************************")
         print("Port fermé")
+
+class Thread3(QThread):
+    def sigfox(self):
+        login = '5c4846efe833d917aff289ee'
+        pwd = 'e4a403da12cadcd0d81140176b75a5c8'
+        device = '1C684'
+
+        s = Sigfox(login, pwd)
+        out  = s.device_info(device)
+        mes = s.device_messages(device)
+
+        for k,v in mes[0].items():
+            #print(k)
+            if k == 'data':
+                self.data = v
+            if k == 'time':
+                self.time_s = v
+            if k == 'rinfos':
+                for ki, vi in v[0].items():
+                    if ki == 'lat':
+                        self.lat = vi
+                    if ki == 'lng':
+                        self.lng = vi
+        self.dic = {'data' : self.data, 'time_s' : self.time_s, 'lat' : self.lat, 'lng' : self.lng}
+        return self.dic
         
+class Map(QWidget):
+
+    def __init__(self):
+        super().__init__()
+        self.__setup__(49.373659, 1.0752621, 12)
+        
+    def __setup__(self, x, y, z):
+        gmap = gmplot.GoogleMapPlotter(x, y, z)
+        gmap.marker(x, y, 'red')
+        gmap.draw("my_map.html")
+        print("done")
 
 def main(): 
     import sys 
@@ -346,7 +377,6 @@ def main():
     window = MainWindow() 
     window.show() 
     app.exec_()
-
 
 if __name__ == "__main__": 
     main()
