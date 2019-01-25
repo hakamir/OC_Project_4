@@ -38,8 +38,11 @@ class TabWidget(QWidget):
         
     def __setup__(self): 
     
+        # Initialize geotag position value
         self.x = "0.0"
         self.y = "0.0"
+        
+        # Initialize graph coordinates of heartbeat
         self.bufferX = []
         self.bufferY = []
         
@@ -81,9 +84,9 @@ class TabWidget(QWidget):
         self.webWidget = QWebEngineView(self.tab1)
         self.webWidget.move(0,20)
         self.webWidget.resize(1000,580)
-        fichierweb = "file:///" + os.path.abspath("my_map.html").replace("\\", "/")
+        self.fichierweb = "file:///" + os.path.abspath("my_map.html").replace("\\", "/")
         self.page = QWebEnginePage()
-        self.page.setUrl(QUrl(fichierweb))
+        self.page.setUrl(QUrl(self.fichierweb))
         self.webWidget.setPage(self.page)
         self.webWidget.show()
         
@@ -128,13 +131,14 @@ class TabWidget(QWidget):
 
         self.view.showGrid(x=True,y=True)
         
+        # Extract data from Sigfox device's message
         self.th3 = Thread3(self)
         self.th3.start()
-        dic = self.th3.sigfox()
-        self.x = dic['lat']
-        self.y = dic['lng']
-        self.time = dic['time_s']
-        self.bpm = dic['data']
+        dicDevice, dicCardio = self.th3.sigfox()
+        self.x = dicDevice['lat']
+        self.y = dicDevice['lng']
+        self.time = dicCardio['time_s']
+        self.bpm = dicCardio['data']
 
         ###################################################################
         # TAB 3                                                           #
@@ -162,7 +166,7 @@ class TabWidget(QWidget):
 
         # Define label showing the number of person get from the RFID receptor
         self.labelNbPersonRFID = QLabel(self)
-        self.nbPersonRFID = "0"#Thread2.run(self) # Prendra la donnée transmise depuis le récepteur RFID
+        self.nbPersonRFID = "0"
         self.labelNbPersonRFID.setText(self.nbPersonRFID)
         self.labelNbPersonRFID.setFont(font)
         
@@ -226,7 +230,16 @@ class TabWidget(QWidget):
         
         self.latValue.setText(self.x)
         self.lonValue.setText(self.y)
-        self.map.__setup__(float(self.x), float(self.y), 12)
+        self.map.__setup__(float(self.x), float(self.y), 9)
+        self.page.setUrl(QUrl(self.fichierweb))
+        self.webWidget.setPage(self.page)
+        self.webWidget.show()
+        
+        dicDevice, dicCardio = self.th3.sigfox()
+        self.x = dicDevice['lat']
+        self.y = dicDevice['lng']
+        self.time = dicCardio['time_s']
+        self.bpm = dicCardio['data']
         
         self.table_constructor(int(self.time),int(self.bpm))
         self.bufferX.append(int(self.time))
@@ -252,7 +265,7 @@ class TabWidget(QWidget):
         self.video.setPixmap(QPixmap.fromImage(image))
         
     def extractToJson(self):
-        dicOut = {"latitude":self.x,"longitude":self.y,"nbPerson":self.nbPersonRFID,"nbPersonCam":self.nbPerson,"cardiaque":self.bpm}
+        dicOut = {"latitude":self.x,"longitude":self.y,"nbPerson":str(self.nbPersonRFID),"nbPersonCam":self.nbPerson,"cardiaque":self.bpm}
 
         filename = "data.json" 
         try: 
@@ -265,13 +278,22 @@ class TabWidget(QWidget):
         """
         # Construct info in the table
         """
+        heure = datetime.datetime.fromtimestamp(time)
         for row in range(self.table.rowCount()):
             # Check for a free row
+            """heures = [0]
+            if heures[row-1] == heure:
+                print("Data already received.")
+                break
+            
+            heures.append(heure)
+            print(heures)"""
+            
             if self.table.cellWidget(row,0) is None:
                 HBox1 = QHBoxLayout()
                 HBox2 = QHBoxLayout()
                 
-                heure = datetime.datetime.fromtimestamp(time)
+                
                 # Will take the value of time and beat per minute into the table
                 HBox1.addWidget(QLabel(str(heure)))
                 HBox2.addWidget(QLabel(str(data)))
@@ -305,12 +327,12 @@ class Thread(QThread):
 class Thread2(QThread):
     def nbPers(self):
         try:
-            port = serial.Serial('/dev/tty.usbserial-A506QTYE', 9600)
+            port = serial.Serial('/dev/tty.usbserial-A506QTYE', 9600) # MAC/OS
         except:
-            try:
+            try:                                                      # Windows
                 port = serial.Serial()
-                port.bitrate=9600
-                port.port='COM32'
+                port.baudrate=9600
+                port.port='COM32'                                     # Specify the good port
                 port.open()
             except:
                 print("ERROR Cannot open serial port.")
@@ -375,10 +397,22 @@ class Thread3(QThread):
         login = '5c4846efe833d917aff289ee'
         pwd = 'e4a403da12cadcd0d81140176b75a5c8'
         device = '1C684'
+        cardio = '736E5'
 
         s = Sigfox(login, pwd)
-        out  = s.device_info(device)
         mes = s.device_messages(device)
+
+        for k,v in mes[0].items():
+            #print(k)
+            if k == 'rinfos':
+                for ki, vi in v[0].items():
+                    if ki == 'lat':
+                        self.lat = vi
+                    if ki == 'lng':
+                        self.lng = vi
+        self.dicDevice = {'lat' : self.lat, 'lng' : self.lng}
+
+        mes = s.device_messages(cardio)
 
         for k,v in mes[0].items():
             #print(k)
@@ -386,14 +420,8 @@ class Thread3(QThread):
                 self.data = v
             if k == 'time':
                 self.time_s = v
-            if k == 'rinfos':
-                for ki, vi in v[0].items():
-                    if ki == 'lat':
-                        self.lat = vi
-                    if ki == 'lng':
-                        self.lng = vi
-        self.dic = {'data' : self.data, 'time_s' : self.time_s, 'lat' : self.lat, 'lng' : self.lng}
-        return self.dic
+        self.dicCardio = {'data' : self.data, 'time_s' : self.time_s}
+        return self.dicDevice, self.dicCardio
          
 class Map(QWidget):
 
