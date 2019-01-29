@@ -110,6 +110,7 @@ class TabWidget(QWidget):
         self.table.setColumnCount(2)
         self.table.setHorizontalHeaderItem(0, QTableWidgetItem("Heure"))
         self.table.setColumnWidth(0,150)
+        self.table.resizeRowsToContents()
         self.table.setHorizontalHeaderItem(1, QTableWidgetItem("Rythme cardiaque"))
         self.table.setColumnWidth(1,150)
         self.table.verticalHeader().setVisible(False)
@@ -246,7 +247,7 @@ class TabWidget(QWidget):
         self.bufferY.append(int(self.bpm))
         self.view.clear()
         self.view.plot(x = self.bufferX, y = self.bufferY, name='Rythme Cardiaque', pen='r', symbol='o')
-        
+        self.table.resizeRowsToContents()
         QApplication.processEvents()
 
     def alarm(self):
