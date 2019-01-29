@@ -2,7 +2,7 @@ import sys, os
 from itertools import product
 
 import serial
-import check_authorisation as check
+import check_persons as check
 from sigfoxapi import Sigfox
 import datetime
 

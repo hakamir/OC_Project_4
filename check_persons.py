@@ -4,7 +4,7 @@ from datetime import datetime
 
 idRFID = 0
 
-with open('autorisations.json') as file:
+with open('persons.json') as file:
     json_data = json.load(file)
 
 def nbPersonnes(tmp):
